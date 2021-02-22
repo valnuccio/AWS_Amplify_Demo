@@ -1,5 +1,20 @@
+
+
+
 type Todo @model {
+  createdAt: AWSDateTime!
+  description: String
   id: ID!
   name: String!
-  description: String
+  updatedAt: AWSDateTime!
+  filePath:String
+}
+
+type Song @model{
+  description: String!
+  id: ID!
+  title: String!
+  filePath: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
 }

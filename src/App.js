@@ -2,7 +2,8 @@
 import './App.css';
 import { withAuthenticator, AmplifySignOut } from '@aws-amplify/ui-react';
 import React, { useEffect, useState } from 'react';
-import { API, graphqlOperation } from 'aws-amplify';
+import { API, graphqlOperation, Storage } from 'aws-amplify';
+
 
 // actual query you need to send
 const listItems = `
@@ -12,26 +13,54 @@ const listItems = `
         id
         name
         description
+        filePath
       }
     }
   }
 `
+
+
 // used for rendering each item
-const ListItem = ({name, description}) =>{
-  
+const ListItem = ({id, name, description, imageUrl}) =>{
+
+
+
+
 
   return (
     <>
     <h3>{name}</h3>
     <p>{description}</p>
+    {console.log('img', imageUrl)}
+   <img src={imageUrl}/>
     </>
   )
   }
+
+
+
+
 
 function App() {
   // this is setup for the 'fetch' essentially
      // this has to be an async request so it waits 
   const[list, setListItems] = useState(null)
+  const[listUrls, setListUrls] = useState(null)
+
+
+
+  const getImages = async items => {
+
+   let urlArray=[]
+    for(let index=0; index<items.length;index++){
+      const toDoFilePath=items[index].filePath
+      const toDoAccessUrl= await Storage.get(toDoFilePath)
+      const imageObj={id:items[index].id, url: toDoAccessUrl}
+      urlArray.push(imageObj)
+    }
+
+    setListUrls(newArr)
+}
 
   const getList = async() => {
     
@@ -45,6 +74,8 @@ function App() {
     // When you make that initial query you are going to get all the info back you would if you were in the aws console. Go back and take a look at that structure
     // to see why and how I only wanted the items themselves below.
       setListItems(data?.listTodos?.items)
+      getImages(data?.listTodos?.items)
+
 
   }
 
@@ -56,9 +87,21 @@ function App() {
     ,
     [])
 
+
+  
+
   const renderList = () =>{
+
     
-    return list.map((item)=><ListItem name={item.name} description={item.description}/>)
+    return list.map((item)=>{
+    
+    let obj=listUrls.filter((ele)=> ele.id===item.id)
+    console.log('obj', obj, 'obj[0]url', obj[0].url)
+    
+    return (
+    <ListItem id={item.id} name={item.name} description={item.description} imageUrl={obj[0].urlId} filePath={item.filePath}/>)
+  })
+
   }
 
   
@@ -69,7 +112,9 @@ function App() {
         {/* This renders the first time with nothing under it */}
        <h1>To Do List</h1>
        {/* only renders once the info has been set! */}
-       {list? <div>{renderList()}</div>:null}
+       {console.log('listUrls', listUrls)}
+       {console.log('list', list)}
+       {list && listUrls? <div>{renderList()}</div>:null}
         <div><AmplifySignOut/></div>
       </header>
     </div>
@@ -81,3 +126,4 @@ function App() {
 
 
 export default withAuthenticator(App);
+
